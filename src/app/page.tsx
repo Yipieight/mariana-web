@@ -1,103 +1,228 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+import { useState } from 'react';
+import { getRecommendation, type ProductRecommendation } from './data/products';
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+interface Question {
+  id: string;
+  title: string;
+  subtitle: string;
+  options: Array<{
+    value: string;
+    label: string;
+    emoji: string;
+  }>;
+}
+
+const questions: Question[] = [
+  {
+    id: 'location',
+    title: '¿Dónde vivís?',
+    subtitle: 'Tu entorno influye en qué productos son más útiles para tu día a día',
+    options: [
+      { value: 'Ciudad', label: 'Ciudad', emoji: '🏙️' },
+      { value: 'Campo', label: 'Campo', emoji: '🌾' },
+      { value: 'Playa', label: 'Playa', emoji: '🏖️' }
+    ]
+  },
+  {
+    id: 'value',
+    title: '¿Qué valorás más en tu día a día?',
+    subtitle: 'Esto nos ayuda a encontrar productos que realmente se adapten a tu estilo de vida',
+    options: [
+      { value: 'Cuidado personal', label: 'Cuidado personal', emoji: '🌸' },
+      { value: 'Cocina ecológica', label: 'Cocina ecológica', emoji: '🥗' },
+      { value: 'Ahorro de energía', label: 'Ahorro de energía', emoji: '💡' }
+    ]
+  },
+  {
+    id: 'commitment',
+    title: '¿Qué tan comprometido/a estás con el consumo sostenible?',
+    subtitle: 'No hay respuestas correctas o incorrectas, solo queremos conocerte mejor',
+    options: [
+      { value: 'Nunca', label: 'Recién empiezo (nunca compré productos ecológicos)', emoji: '🌱' },
+      { value: 'A veces', label: 'A veces busco opciones verdes', emoji: '🌿' },
+      { value: 'Siempre', label: 'Siempre elijo opciones sostenibles', emoji: '🌳' }
+    ]
+  }
+];
+
+const productEmojis: Record<string, string> = {
+  'Cepillo de bambú': '🦷',
+  'Shampoo sólido': '🧴',
+  'Desodorante ecológico': '🌿',
+  'Tote bag reutilizable': '🛍️',
+  'Envases de silicona': '📦',
+  'Filtro de agua de carbón': '💧',
+  'Luz LED portátil': '🔦',
+  'Bombilla LED inteligente': '💡',
+  'Cargador solar USB': '🔌',
+  'Jabón artesanal de glicerina': '🧼',
+  'Crema hidratante ecológica': '🧴',
+  'Kit de higiene zero waste': '🎁',
+  'Bolsas reutilizables de tela': '👜',
+  'Frascos de vidrio herméticos': '🫙',
+  'Compostadora doméstica': '🗑️',
+  'Termo de acero inoxidable': '🍵',
+  'Lámpara solar de jardín': '🏮',
+  'Panel solar portátil': '☀️',
+  'Protector solar mineral': '🧴',
+  'Champú sólido para agua salada': '🌊',
+  'Kit beach clean': '🧽',
+  'Set de cubiertos de bambú': '🍴',
+  'Cooler biodegradable': '🧊',
+  'Purificador de agua portátil': '💧',
+  'Ventilador manual eco': '🪭',
+  'Radio solar resistente al agua': '📻',
+  'Mochila con panel solar integrado': '🎒'
+};
+
+export default function GreenMatchQuiz() {
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [recommendation, setRecommendation] = useState<ProductRecommendation | null>(null);
+  const [showResult, setShowResult] = useState(false);
+
+  const handleAnswer = (questionId: string, answer: string) => {
+    setAnswers(prev => ({ ...prev, [questionId]: answer }));
+  };
+
+  const goToNext = () => {
+    if (currentQuestion < questions.length - 1) {
+      setCurrentQuestion(prev => prev + 1);
+    } else {
+      // Calculate recommendation
+      const result = getRecommendation(
+        answers.location,
+        answers.value,
+        answers.commitment
+      );
+      setRecommendation(result);
+      setShowResult(true);
+    }
+  };
+
+  const goToPrevious = () => {
+    if (currentQuestion > 0) {
+      setCurrentQuestion(prev => prev - 1);
+    }
+  };
+
+  const restart = () => {
+    setCurrentQuestion(0);
+    setAnswers({});
+    setRecommendation(null);
+    setShowResult(false);
+  };
+
+  const currentQuestionData = questions[currentQuestion];
+  const isAnswered = currentQuestionData && answers[currentQuestionData.id];
+  const progress = ((currentQuestion + 1) / questions.length) * 100;
+
+  if (showResult && recommendation) {
+    return (
+      <div className="main-container">
+        <div className="quiz-wrapper">
+          <div className="result-card">
+            <div className="result-header">
+              <div className="result-badge">
+                ¡Tu producto ideal!
+              </div>
+              <h1 className="product-name">{recommendation.product}</h1>
+              <div className="product-image">
+                {productEmojis[recommendation.product] || '🌱'}
+              </div>
+            </div>
+            
+            <p className="product-benefit">
+              {recommendation.benefit}
+            </p>
+            
+            <p className="motivational-phrase">
+              "{recommendation.motivationalPhrase}"
+            </p>
+            
+            <button onClick={restart} className="restart-button">
+              🔄 Intentar de nuevo
+            </button>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
+    );
+  }
+
+  return (
+    <div className="main-container">
+      <div className="quiz-wrapper">
+        {/* Header */}
+        <div className="header">
+          <h1 className="logo">Green Match</h1>
+          <p className="subtitle">
+            Descubrí el producto ecológico perfecto para tu estilo de vida
+          </p>
+        </div>
+
+        {/* Progress */}
+        <div className="progress-container">
+          <div className="progress-bar">
+            <div 
+              className="progress-fill" 
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <p className="progress-text">
+            Pregunta {currentQuestion + 1} de {questions.length}
+          </p>
+        </div>
+
+        {/* Question Card */}
+        <div className="question-card">
+          <div className="question-header">
+            <div className="question-number">
+              Pregunta {currentQuestion + 1}
+            </div>
+            <h2 className="question-title">
+              {currentQuestionData.title}
+            </h2>
+            <p className="question-subtitle">
+              {currentQuestionData.subtitle}
+            </p>
+          </div>
+
+          <div className="options-grid">
+            {currentQuestionData.options.map((option) => (
+              <button
+                key={option.value}
+                className={`option-button ${
+                  answers[currentQuestionData.id] === option.value ? 'selected' : ''
+                }`}
+                onClick={() => handleAnswer(currentQuestionData.id, option.value)}
+              >
+                <span className="option-text">{option.label}</span>
+                <span className="option-emoji">{option.emoji}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="navigation">
+            <button
+              onClick={goToPrevious}
+              disabled={currentQuestion === 0}
+              className="nav-button"
+            >
+              ← Anterior
+            </button>
+            
+            <button
+              onClick={goToNext}
+              disabled={!isAnswered}
+              className="nav-button primary"
+            >
+              {currentQuestion === questions.length - 1 ? 'Ver mi producto 🌱' : 'Siguiente →'}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
