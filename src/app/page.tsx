@@ -139,7 +139,7 @@ export default function GreenMatchQuiz() {
             </p>
             
             <p className="motivational-phrase">
-              "{recommendation.motivationalPhrase}"
+              &quot;{recommendation.motivationalPhrase}&quot;
             </p>
             
             <button onClick={restart} className="restart-button">
