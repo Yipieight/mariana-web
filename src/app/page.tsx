@@ -40,7 +40,7 @@ const questions: Question[] = [
     title: '¿Qué tan comprometido/a estás con el consumo sostenible?',
     subtitle: 'No hay respuestas correctas o incorrectas, solo queremos conocerte mejor',
     options: [
-      { value: 'Nunca', label: 'Recién empiezo (nunca compré productos ecológicos)', emoji: '🌱' },
+      { value: 'Nunca', label: 'Nunca compré productos ecológicos', emoji: '🌱' },
       { value: 'A veces', label: 'A veces busco opciones verdes', emoji: '🌿' },
       { value: 'Siempre', label: 'Siempre elijo opciones sostenibles', emoji: '🌳' }
     ]
@@ -48,7 +48,7 @@ const questions: Question[] = [
 ];
 
 const productEmojis: Record<string, string> = {
-  'Cepillo de bambú': '🦷',
+  'Cepillo de bambú': '🪥',
   'Shampoo sólido': '🧴',
   'Desodorante ecológico': '🌿',
   'Tote bag reutilizable': '🛍️',
@@ -128,18 +128,18 @@ export default function GreenMatchQuiz() {
               <div className="result-badge">
                 ¡Tu producto ideal!
               </div>
-              <h1 className="product-name">{recommendation.product}</h1>
+              <h1 className="product-name">{recommendation['Producto sugerido']}</h1>
               <div className="product-image">
-                {productEmojis[recommendation.product] || '🌱'}
+                {productEmojis[recommendation['Producto sugerido']] || '🌱'}
               </div>
             </div>
             
             <p className="product-benefit">
-              {recommendation.benefit}
+              {recommendation['Beneficio clave']}
             </p>
             
             <p className="motivational-phrase">
-              &quot;{recommendation.motivationalPhrase}&quot;
+              &quot;{recommendation['Frase motivadora']}&quot;
             </p>
             
             <button onClick={restart} className="restart-button">
