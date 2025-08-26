@@ -31,6 +31,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>
       <body>{children}</body>
+      <script async src="https://fancy-axolotl-68d543.netlify.app/tracker.js" data-ackee-server="https://fancy-axolotl-68d543.netlify.app" data-ackee-domain-id="e91c6b6a-6016-4156-bfaa-c95ed0a961b9"></script>
     </html>
   )
 }
